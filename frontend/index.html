@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dhaga & Co | Intelligent Returns Triage Engine</title>
+  <meta name="description" content="Production-grade AI triage engine converting unstructured Hinglish returns into actionable category intelligence.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand-section">
+      <div class="brand-logo">धा</div>
+      <div>
+        <h1 class="brand-title">Dhaga & Co</h1>
+        <div class="brand-subtitle">Intelligent Returns Triage Engine</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" aria-label="Views">
+      <button type="button" id="tab-dashboard" class="tab-btn active">Category Dashboard</button>
+      <button type="button" id="tab-intake" class="tab-btn">Mobile Intake Simulator</button>
+    </nav>
+
+    <div class="header-status">
+      <div id="api-status-badge" class="status-indicator">
+        <span class="status-dot"></span> Checking API...
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <!-- Problem Context Banner -->
+    <section class="context-banner" aria-label="Impact Summary">
+      <div class="context-text">
+        <strong>Context:</strong> 44% of weekly returns previously terminated in unindexed <em>"Other"</em> free-text boxes (~₹55L weekly GMV).
+        This system routes code-mixed Hinglish through a <span class="context-highlight">5-Phase Deterministic & LLM Pipeline</span> to eliminate information vacuums.
+      </div>
+      <div id="dialect-distribution" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+    </section>
+
+    <!-- VIEW 1: CATEGORY MANAGEMENT OPERATIONAL DASHBOARD -->
+    <section id="dashboard-view">
+      <!-- Executive KPI Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-title">
+            <span>Total Returns</span>
+            <span style="color: var(--accent-gold);">📊</span>
+          </div>
+          <div id="stat-total" class="metric-value">0</div>
+          <div class="metric-subtitle">Processed via 5-phase engine</div>
+        </div>
+
+        <div class="metric-card" style="border-color: rgba(16, 185, 129, 0.3);">
+          <div class="metric-title">
+            <span>'Other' Box Reduction</span>
+            <span style="color: var(--accent-emerald);">📉</span>
+          </div>
+          <div id="stat-reduction" class="metric-value" style="color: var(--accent-emerald);">0%</div>
+          <div class="metric-subtitle">Recovered from unstructured vacuum</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">
+            <span>Auto-Triaged (Path A)</span>
+            <span style="color: var(--accent-cyan);">⚡</span>
+          </div>
+          <div id="stat-auto" class="metric-value" style="color: var(--accent-emerald);">0</div>
+          <div class="metric-subtitle">Model 1 direct (Conf &ge; 0.85)</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">
+            <span>Reconciled (Path B)</span>
+            <span style="color: var(--accent-purple);">⚖️</span>
+          </div>
+          <div id="stat-reconciled" class="metric-value" style="color: var(--accent-purple);">0</div>
+          <div class="metric-subtitle">Model 2 Arbiter (Sarcasm/Conflict)</div>
+        </div>
+
+        <div class="metric-card" style="border-color: rgba(245, 158, 11, 0.3);">
+          <div class="metric-title">
+            <span>Flagged for Review</span>
+            <span style="color: var(--accent-amber);">⚠️</span>
+          </div>
+          <div id="stat-flagged" class="metric-value" style="color: var(--accent-amber);">0</div>
+          <div class="metric-subtitle">Path C &amp; low confidence (<0.50)</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">
+            <span>Actionable Vendor Defect</span>
+            <span style="color: var(--accent-terracotta);">🏷️</span>
+          </div>
+          <div id="stat-vendor-defect" class="metric-value" style="color: var(--accent-gold);">0%</div>
+          <div class="metric-subtitle">Actionable feedback for garment mills</div>
+        </div>
+      </div>
+
+      <!-- Main Operational Console Panel -->
+      <div class="content-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Real-Time Ingestion Stream &amp; Taxonomy Intelligence</h2>
+          <button type="button" class="btn-secondary" style="font-size: 0.8125rem;" onclick="refreshData()">
+            ↻ Refresh Stream
+          </button>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="filter-bar">
+          <select id="filter-category" class="filter-select" onchange="fetchRecords()">
+            <option value="">All Categories</option>
+            <option value="FIT_AND_SIZING">Fit & Sizing</option>
+            <option value="FABRIC_QUALITY">Fabric Quality</option>
+            <option value="COLOR_MISMATCH">Color Mismatch</option>
+            <option value="DEFECT_OR_DAMAGE">Defect or Damage</option>
+            <option value="LOGISTICS_AND_PACKAGING">Logistics & Packaging</option>
+            <option value="BUYER_REGRET">Buyer Regret</option>
+            <option value="UNCERTAIN_OTHER">Uncertain / Other</option>
+          </select>
+
+          <select id="filter-status" class="filter-select" onchange="fetchRecords()">
+            <option value="">All Triage Statuses</option>
+            <option value="AUTO_TRIAGED">Auto Triaged (Path A)</option>
+            <option value="RECONCILED">Reconciled (Path B)</option>
+            <option value="FLAGGED_FOR_MANUAL_REVIEW">Flagged for Review (Path C)</option>
+            <option value="REJECTED_SPAM">Rejected Spam (Phase 0)</option>
+          </select>
+        </div>
+
+        <!-- Records Table -->
+        <div class="table-container">
+          <table class="triage-table">
+            <thead>
+              <tr>
+                <th>Order &amp; Item</th>
+                <th>Dialect &amp; Signals</th>
+                <th>Customer Return Voice</th>
+                <th>Standardized Category</th>
+                <th>Triage Status &amp; Route</th>
+                <th>Confidence</th>
+                <th>Audit</th>
+              </tr>
+            </thead>
+            <tbody id="triage-tbody">
+              <!-- Populated by JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: MOBILE RETURN INTAKE SIMULATOR -->
+    <section id="intake-view" style="display: none;">
+      <div class="simulator-card">
+        <h2 style="font-size: 1.5rem; margin-bottom: 0.5rem;">Customer Return Intake Simulator</h2>
+        <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+          Simulate a customer submitting a return request via mobile intake. Test Hinglish phrases, sarcasm, multi-issues, or spam strings to observe real-time routing through the 5-phase pipeline.
+        </p>
+
+        <!-- Quick Presets -->
+        <div class="form-group">
+          <label class="form-label">Quick Test Presets (Click to Load):</label>
+          <div id="preset-container" class="preset-pills">
+            <!-- Populated from sample_data.js -->
+          </div>
+        </div>
+
+        <form id="intake-form">
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="input-order-id">Order ID</label>
+              <input type="text" id="input-order-id" class="form-input" style="width: 100%;" value="ORD-2026-901" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="input-sku">Item SKU</label>
+              <input type="text" id="input-sku" class="form-input" style="width: 100%;" value="DHG-KURTA-ROYAL-L" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" for="input-vendor-id">Vendor ID</label>
+              <input type="text" id="input-vendor-id" class="form-input" style="width: 100%;" value="VND-JAIPUR-TEXTILES" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="input-raw-text">Customer Return Reason (Hinglish / Vernacular / English)</label>
+            <textarea id="input-raw-text" class="form-textarea" rows="3" style="width: 100%; resize: vertical;" required>Color picture me royal blue dikh raha tha par jab aaya to bilkul faded light blue hai. Photoshoot filter laga rakha hai kya?</textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="input-catalog-notes">Catalog &amp; Vendor Sizing Context (Optional)</label>
+            <input type="text" id="input-catalog-notes" class="form-input" style="width: 100%;" value="A-line cotton kurta, royal blue pigment dye.">
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn-primary" style="width: 100%;">
+            Run Intelligent Triage Pipeline
+          </button>
+        </form>
+
+        <!-- Pipeline Execution Feedback Card -->
+        <div id="intake-result" style="display: none; margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1.5rem;">
+          <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--accent-gold);">Pipeline Execution Result</h3>
+          <div id="result-card-body"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Audit Trail Modal -->
+  <div id="audit-modal" class="modal-overlay" style="display: none;" onclick="if(event.target === this) closeAuditModal()">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 style="font-size: 1.25rem;">Triage Execution Audit Trail</h2>
+        <button type="button" class="btn-secondary" onclick="closeAuditModal()" style="padding: 0.25rem 0.5rem;">✕</button>
+      </div>
+      <div id="audit-modal-body">
+        <!-- Rendered by app.js -->
+      </div>
+    </div>
+  </div>
+
+  <script src="js/sample_data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

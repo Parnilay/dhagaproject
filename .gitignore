@@ -1,0 +1,28 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Node dependencies
+node_modules/
+npm-debug.log*
+
+# System & IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Agent configuration
+AGENTS.md
