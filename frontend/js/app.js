@@ -1,6 +1,7 @@
-// Frontend logic for Dhaga & Co Intelligent Returns Triage Console
-
-const API_BASE = "http://localhost:8000/api/v1";
+// Automatically routes to local backend on port 8000 during dev, or relative /api/v1 on Vercel production
+const API_BASE = (window.location.hostname === "localhost" && window.location.port === "5173")
+  ? "http://localhost:8000/api/v1"
+  : "/api/v1";
 
 let currentRecords = [];
 let activeTab = "dashboard";
