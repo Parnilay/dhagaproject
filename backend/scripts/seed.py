@@ -92,7 +92,7 @@ async def seed():
             catalog_sizing_notes=item["catalog_sizing_notes"]
         )
         record = await engine.process(req)
-        print(f"[{idx}/{len(SAMPLE_RETURNS)}] Order: {record.order_id} | Path: {record.routing_path.value:10} | Status: {record.triage_status.value:26} | Category: {record.primary_category.value:22} | Conf: {record.confidence_score:.2f}")
+        print(f"[{idx}/{len(SAMPLE_RETURNS)}] Order: {record.order_id} | Path: {record.routing_path:10} | Status: {record.status.value:26} | Category: {record.primary_category:22} | Conf: {record.final_confidence:.2f}")
 
     print("\n" + "=" * 60)
     analytics = await supabase_service.get_analytics_summary()

@@ -49,15 +49,21 @@ class AmbiguityArbiter:
 
     def __init__(self):
         self.chain = None
-        if settings.OPENAI_API_KEY:
+        api_key = settings.OPENROUTER_API_KEY or settings.OPENAI_API_KEY
+        if api_key:
             try:
                 llm = ChatOpenAI(
                     model=settings.MODEL_2_NAME,
                     temperature=settings.MODEL_2_TEMPERATURE,
-                    api_key=settings.OPENAI_API_KEY
+                    api_key=api_key,
+                    base_url=settings.OPENROUTER_BASE_URL,
+                    default_headers={
+                        "HTTP-Referer": "https://dhaga.co",
+                        "X-Title": "Dhaga Returns Triage Engine",
+                    }
                 )
                 self.chain = EVALUATOR_PROMPT | llm.with_structured_output(EvaluatorReconciliation)
-                logger.info(f"Model 2 ({settings.MODEL_2_NAME}) initialized with structured output.")
+                logger.info(f"Model 2 ({settings.MODEL_2_NAME}) initialized via OpenRouter with structured output.")
             except Exception as e:
                 logger.error(f"Failed to initialize Model 2 LLM: {e}")
 

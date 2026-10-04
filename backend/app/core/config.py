@@ -8,15 +8,19 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = False
 
-    # LLM Settings (Two Models Minimum)
-    OPENAI_API_KEY: str = Field(default="", description="OpenAI API Key for Model 1 and Model 2")
-    
+    # LLM Settings via OpenRouter
+    OPENROUTER_API_KEY: str = Field(default="", description="OpenRouter API Key for Model 1 and Model 2")
+    OPENROUTER_BASE_URL: str = Field(default="https://openrouter.ai/api/v1", description="OpenRouter API Base URL")
+    OPENAI_API_KEY: str = Field(default="", description="Legacy OpenAI API Key fallback")
+
     # Model 1 (Bulk Triage & Extraction, T=0.0)
-    MODEL_1_NAME: str = "gpt-4o-mini"
+    # Examples on OpenRouter: openai/gpt-4o-mini, google/gemini-flash-1.5, meta-llama/llama-3.1-8b-instruct
+    MODEL_1_NAME: str = "openai/gpt-4o-mini"
     MODEL_1_TEMPERATURE: float = 0.0
 
     # Model 2 (Evaluator & Ambiguity Arbiter, T=0.2)
-    MODEL_2_NAME: str = "gpt-4o"
+    # Examples on OpenRouter: openai/gpt-4o, anthropic/claude-3.5-sonnet, google/gemini-pro-1.5
+    MODEL_2_NAME: str = "openai/gpt-4o"
     MODEL_2_TEMPERATURE: float = 0.2
 
     # Deterministic Confidence Gate Thresholds

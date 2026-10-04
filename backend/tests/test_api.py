@@ -43,8 +43,8 @@ async def test_triage_spam_rejection():
         response = await client.post("/api/v1/triage", json=payload)
         assert response.status_code == 201
         data = response.json()
-        assert data["triage_status"] == "REJECTED_SPAM"
-        assert data["routing_path"] == "REJECTED"
+        assert data["status"] == "FLAGGED_FOR_MANUAL_REVIEW"
+        assert data["sub_category"] == "rejected_spam"
 
 
 @pytest.mark.asyncio

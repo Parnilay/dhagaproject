@@ -40,15 +40,21 @@ class BulkExtractor:
 
     def __init__(self):
         self.chain = None
-        if settings.OPENAI_API_KEY:
+        api_key = settings.OPENROUTER_API_KEY or settings.OPENAI_API_KEY
+        if api_key:
             try:
                 llm = ChatOpenAI(
                     model=settings.MODEL_1_NAME,
                     temperature=settings.MODEL_1_TEMPERATURE,
-                    api_key=settings.OPENAI_API_KEY
+                    api_key=api_key,
+                    base_url=settings.OPENROUTER_BASE_URL,
+                    default_headers={
+                        "HTTP-Referer": "https://dhaga.co",
+                        "X-Title": "Dhaga Returns Triage Engine",
+                    }
                 )
                 self.chain = EXTRACTION_PROMPT | llm.with_structured_output(InitialTriageExtraction)
-                logger.info(f"Model 1 ({settings.MODEL_1_NAME}) initialized with structured output.")
+                logger.info(f"Model 1 ({settings.MODEL_1_NAME}) initialized via OpenRouter with structured output.")
             except Exception as e:
                 logger.error(f"Failed to initialize Model 1 LLM: {e}")
 

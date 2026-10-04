@@ -40,25 +40,21 @@ class SupabaseService:
                 payload = {
                     "id": str(record.id),
                     "order_id": record.order_id,
-                    "sku": record.sku,
+                    "sku_id": record.sku_id,
                     "vendor_id": record.vendor_id,
-                    "customer_id": record.customer_id,
-                    "raw_text": record.raw_text,
-                    "sanitized_text": record.sanitized_text,
+                    "raw_customer_text": record.raw_customer_text,
+                    "cleaned_customer_text": record.cleaned_customer_text,
                     "detected_dialect": record.detected_dialect,
                     "standardized_summary": record.standardized_summary,
-                    "primary_category": record.primary_category.value,
-                    "sub_category": record.sub_category,
-                    "confidence_score": float(record.confidence_score),
+                    "primary_category": str(record.primary_category),
+                    "sub_category": str(record.sub_category),
                     "is_multi_issue": record.is_multi_issue,
                     "is_sarcastic": record.is_sarcastic,
-                    "is_actionable_for_vendor": record.is_actionable_for_vendor,
-                    "routing_path": record.routing_path.value,
-                    "triage_status": record.triage_status.value,
+                    "initial_confidence": float(record.initial_confidence),
+                    "final_confidence": float(record.final_confidence),
+                    "status": record.status.value,
+                    "evaluator_model_invoked": record.evaluator_model_invoked,
                     "reconciliation_notes": record.reconciliation_notes,
-                    "model_1_model_name": record.model_1_model_name,
-                    "model_2_model_name": record.model_2_model_name,
-                    "execution_time_ms": record.execution_time_ms,
                     "created_at": record.created_at.isoformat(),
                 }
                 res = self.client.table("return_triage_records").insert(payload).execute()
@@ -88,7 +84,7 @@ class SupabaseService:
 
     async def list_records(
         self,
-        category: Optional[ReturnCategory] = None,
+        category: Optional[str] = None,
         status: Optional[TriageStatus] = None,
         limit: int = 50,
         offset: int = 0
@@ -99,7 +95,7 @@ class SupabaseService:
         if category:
             records = [r for r in records if r.primary_category == category]
         if status:
-            records = [r for r in records if r.triage_status == status]
+            records = [r for r in records if r.status == status]
 
         # Sort descending by created_at
         records.sort(key=lambda r: r.created_at, reverse=True)
@@ -124,27 +120,33 @@ class SupabaseService:
                 dialect_distribution={}
             )
 
-        auto_triaged = sum(1 for r in records if r.triage_status == TriageStatus.AUTO_TRIAGED)
-        reconciled = sum(1 for r in records if r.triage_status == TriageStatus.RECONCILED)
-        flagged = sum(1 for r in records if r.triage_status == TriageStatus.FLAGGED_FOR_MANUAL_REVIEW)
-        rejected = sum(1 for r in records if r.triage_status == TriageStatus.REJECTED_SPAM)
-        actionable_vendor = sum(1 for r in records if r.is_actionable_for_vendor)
+        auto_triaged = sum(1 for r in records if r.status == TriageStatus.AUTO_TRIAGED)
+        reconciled = sum(1 for r in records if r.status == TriageStatus.RECONCILED)
+        flagged = sum(1 for r in records if r.status == TriageStatus.FLAGGED_FOR_MANUAL_REVIEW)
+        rejected_spam = sum(1 for r in records if r.sub_category == "rejected_spam")
 
         cat_dist: Dict[str, int] = {}
         for r in records:
-            cat_dist[r.primary_category.value] = cat_dist.get(r.primary_category.value, 0) + 1
+            cat_dist[r.primary_category] = cat_dist.get(r.primary_category, 0) + 1
 
         dialect_dist: Dict[str, int] = {}
         for r in records:
             if r.detected_dialect:
                 dialect_dist[r.detected_dialect] = dialect_dist.get(r.detected_dialect, 0) + 1
 
-        avg_conf = sum(r.confidence_score for r in records) / total
+        avg_conf = sum(r.final_confidence for r in records) / total
 
-        # In baseline, 44% were unclassified 'Other'.
+        # Baseline: 44% were unclassified 'Other'.
         # Reduction calculation: current 'UNCERTAIN_OTHER' vs historical 44%
         uncertain_count = cat_dist.get(ReturnCategory.UNCERTAIN_OTHER.value, 0)
         reduction = max(0.0, (1.0 - (uncertain_count / total)) * 100.0)
+
+        # Defect categories (Fabric quality, Defect/damage, Fit/sizing with evaluator notes)
+        vendor_defect_count = sum(
+            1 for r in records
+            if r.primary_category in [ReturnCategory.DEFECT_OR_DAMAGE.value, ReturnCategory.FABRIC_QUALITY.value]
+        )
+        defect_rate = round((vendor_defect_count / total) * 100.0, 1)
 
         return TriageAnalyticsSummary(
             total_returns_processed=total,
@@ -152,9 +154,9 @@ class SupabaseService:
             auto_triaged_count=auto_triaged,
             reconciled_count=reconciled,
             flagged_for_review_count=flagged,
-            rejected_spam_count=rejected,
+            rejected_spam_count=rejected_spam,
             avg_confidence_score=round(avg_conf, 2),
-            actionable_vendor_defect_rate=round((actionable_vendor / total) * 100.0, 1),
+            actionable_vendor_defect_rate=defect_rate,
             category_distribution=cat_dist,
             dialect_distribution=dialect_dist
         )

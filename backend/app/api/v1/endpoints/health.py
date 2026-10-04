@@ -14,7 +14,8 @@ async def health_check():
         "models": {
             "model_1": settings.MODEL_1_NAME,
             "model_2": settings.MODEL_2_NAME,
-            "llm_key_configured": bool(settings.OPENAI_API_KEY)
+            "provider": "OpenRouter",
+            "llm_key_configured": bool(settings.OPENROUTER_API_KEY or settings.OPENAI_API_KEY)
         },
         "thresholds": {
             "path_a_direct": settings.CONFIDENCE_DIRECT_THRESHOLD,

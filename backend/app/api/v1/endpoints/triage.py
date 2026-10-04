@@ -39,7 +39,7 @@ async def triage_return(request: TriageInputRequest):
     summary="List Triage Records"
 )
 async def list_triage_records(
-    category: Optional[ReturnCategory] = Query(None, description="Filter by category"),
+    category: Optional[str] = Query(None, description="Filter by category"),
     status: Optional[TriageStatus] = Query(None, description="Filter by triage status"),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0)

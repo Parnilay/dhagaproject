@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 
 class ReturnCategory(str, Enum):
@@ -19,7 +19,6 @@ class TriageStatus(str, Enum):
     AUTO_TRIAGED = "AUTO_TRIAGED"
     RECONCILED = "RECONCILED"
     FLAGGED_FOR_MANUAL_REVIEW = "FLAGGED_FOR_MANUAL_REVIEW"
-    REJECTED_SPAM = "REJECTED_SPAM"
 
 
 class RoutingPath(str, Enum):
@@ -77,15 +76,24 @@ class EvaluatorReconciliation(BaseModel):
 
 
 class TriageInputRequest(BaseModel):
-    order_id: str = Field(..., description="Customer order identifier, e.g. ORD-98241")
-    sku: str = Field(..., description="Item SKU, e.g. DHG-KURTA-042")
-    vendor_id: str = Field(..., description="Vendor identifier, e.g. VND-JAIPUR-01")
-    raw_text: str = Field(..., min_length=1, description="Raw customer return description (Hinglish/English)")
+    order_id: str = Field(..., max_length=64, description="Customer order identifier, e.g. ORD-98241")
+    sku_id: Optional[str] = Field(default=None, max_length=64, description="Item SKU ID, e.g. DHG-KURTA-042")
+    sku: Optional[str] = Field(default=None, max_length=64, description="Alias for sku_id")
+    vendor_id: Optional[str] = Field(default=None, max_length=64, description="Vendor identifier, e.g. VND-JAIPUR-01")
+    raw_customer_text: Optional[str] = Field(default=None, description="Raw customer return description (Hinglish/English)")
+    raw_text: Optional[str] = Field(default=None, description="Alias for raw_customer_text")
     customer_id: Optional[str] = Field(default=None, description="Optional customer account ID")
     catalog_sizing_notes: Optional[str] = Field(
         default=None,
         description="Catalog vendor notes, e.g. 'Slim fit cut, run 1 size small'"
     )
+
+    def get_sku_id(self) -> str:
+        return self.sku_id or self.sku or "UNKNOWN-SKU"
+
+    def get_raw_text(self) -> str:
+        text = self.raw_customer_text or self.raw_text or ""
+        return text.strip()
 
 
 class SanitationResult(BaseModel):
@@ -96,27 +104,58 @@ class SanitationResult(BaseModel):
 
 class ReturnTriageRecord(BaseModel):
     id: UUID = Field(default_factory=uuid4)
-    order_id: str
-    sku: str
-    vendor_id: str
-    customer_id: Optional[str] = None
-    raw_text: str
-    sanitized_text: str
-    detected_dialect: Optional[str] = None
+    order_id: str = Field(..., max_length=64)
+    sku_id: str = Field(..., max_length=64)
+    vendor_id: Optional[str] = Field(default=None, max_length=64)
+    raw_customer_text: str
+    cleaned_customer_text: str
+    detected_dialect: Optional[str] = Field(default=None, max_length=32)
     standardized_summary: Optional[str] = None
-    primary_category: ReturnCategory
-    sub_category: Optional[str] = None
-    confidence_score: float
+    primary_category: str = Field(..., max_length=64)
+    sub_category: str = Field(..., max_length=64)
     is_multi_issue: bool = False
     is_sarcastic: bool = False
-    is_actionable_for_vendor: bool = False
-    routing_path: RoutingPath
-    triage_status: TriageStatus
+    initial_confidence: float
+    final_confidence: float
+    status: TriageStatus = TriageStatus.AUTO_TRIAGED
+    evaluator_model_invoked: bool = False
     reconciliation_notes: Optional[str] = None
-    model_1_model_name: Optional[str] = None
-    model_2_model_name: Optional[str] = None
-    execution_time_ms: float = 0.0
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    # Computed fields for backward compatibility with frontend/APIs
+    @computed_field
+    @property
+    def sku(self) -> str:
+        return self.sku_id
+
+    @computed_field
+    @property
+    def raw_text(self) -> str:
+        return self.raw_customer_text
+
+    @computed_field
+    @property
+    def sanitized_text(self) -> str:
+        return self.cleaned_customer_text
+
+    @computed_field
+    @property
+    def confidence_score(self) -> float:
+        return self.final_confidence
+
+    @computed_field
+    @property
+    def triage_status(self) -> str:
+        return self.status.value
+
+    @computed_field
+    @property
+    def routing_path(self) -> str:
+        if self.evaluator_model_invoked:
+            return RoutingPath.PATH_B.value
+        elif self.status == TriageStatus.AUTO_TRIAGED:
+            return RoutingPath.PATH_A.value
+        return RoutingPath.PATH_C.value
 
 
 class TriageAnalyticsSummary(BaseModel):
